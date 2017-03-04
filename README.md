@@ -19,8 +19,6 @@ The following OpenStack services are installed as part these scripts:
 3. Nova (Compute)
 4. Neutron (Networking)
 5. Horizon (Dashboard)
-6. Heat (Orchestration) - work in progress
-7. Ceilometer (Telemetry) - work in progress
 
 #### Important Notes ####
 1. The script installs Linux Bridge packages by default. Installing OVS can be done using a utility script provided in the `lib` directory.

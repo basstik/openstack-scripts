@@ -12,9 +12,6 @@ if [ "$1" == "compute" ]
 		
 		echo_and_sleep "About to configure Neutron for Compute" 3
 		bash $(dirname $0)/configure-neutron.sh compute $controller_host_name $rabbitmq_password $neutron_password
-		
-		#echo_and_sleep "About to configure Ceilometer for Compute" 3
-		#bash $(dirname $0)/configure-ceilometer.sh compute $controller_host_name $rabbitmq_password $neutron_password $metering_secret
 
 		bash $(dirname $0)/configure-qemu.sh
 elif [ "$1" == "controller" ] 
@@ -92,11 +89,6 @@ elif [ "$1" == "controller" ]
 		echo_and_sleep "About to setup Horizon-Dashboard"
 		bash $(dirname $0)/configure-horizon.sh $controller_host_name
 		
-		#echo_and_sleep "About to setup Ceilometer..."
-		#bash $(dirname $0)/configure-ceilometer.sh controller $controller_host_name $rabbitmq_password $neutron_password $metering_secret $ceilometer_db_password
-
-		#echo_and_sleep "About to setup Heat..."
-		#bash $(dirname $0)/configure-heat.sh $heat_db_password $mysql_user $mysql_password $controller_host_name $rabbitmq_password $heat_password
 elif [ "$1" == "networknode" ]
 	then
 		echo_and_sleep "About to configure Network Node"

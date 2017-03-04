@@ -33,12 +33,6 @@ readonly nova_db_password="password"
 readonly neutron_password="password"
 readonly neutron_db_password="password"
 
-readonly ceilometer_password="password"
-readonly ceilometer_db_password="password"
-
-readonly heat_password="password"
-readonly heat_db_password="password"
-
 function echo_and_sleep() {
 	if [ -z "$2" ]
 		then
