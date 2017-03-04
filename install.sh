@@ -55,28 +55,11 @@ function install-controller-packages() {
   		neutron-linuxbridge-agent neutron-dhcp-agent \
 		haproxy \
   		neutron-metadata-agent python-neutronclient conntrack -y
-
-	echo "Installing Cinder for Controller"
-	sleep 2
-	apt-get install cinder-api cinder-scheduler python-cinderclient -y
 	
 	echo "Installing Horizon..."
 	sleep 2
 	apt-get install openstack-dashboard -y
-	
-	echo "Installing Ceilometer for Controller"
-	sleep 2
-	apt-get install mongodb-server mongodb-clients python-pymongo -y
-	sleep 2
-	apt-get install ceilometer-api ceilometer-collector ceilometer-agent-central \
-	ceilometer-agent-notification ceilometer-alarm-evaluator ceilometer-alarm-notifier \
-	python-ceilometerclient -y
-
-	echo "Installing Heat for Controller..."
-	sleep 2
-	apt-get install heat-api heat-api-cfn heat-engine \
-  				python-heatclient -y
-
+    
 	echo "Installing Network Node Components..."
 	sleep 2
 	install-networknode-packages
@@ -102,10 +85,6 @@ function install-compute-packages() {
 	echo "About to install Neutron for Compute"
 	sleep 2
 	apt-get install neutron-plugin-linuxbridge-agent conntrack -y
-	
-	echo "About to install Ceilometer for Compute"
-	sleep 2
-	apt-get install ceilometer-agent-compute -y
 	
 	apt-get autoremove -y
 }
