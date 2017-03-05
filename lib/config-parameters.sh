@@ -2,7 +2,7 @@ controller_host_name="controller"
 
 ### Start - interface related settings
 readonly mgmt_interface="eth0"
-readonly data_interface="eth1"
+readonly data_interface="eth0"
 ### End - interface related settings
 
 ### Start - Neutron related settings
