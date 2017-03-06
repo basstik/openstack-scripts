@@ -74,7 +74,9 @@ function install-networknode-packages() {
 	sleep 2
 	apt-get install neutron-plugin-ml2 neutron-plugin-linuxbridge-agent \
 	neutron-l3-agent neutron-dhcp-agent neutron-metadata-agent python-neutronclient conntrack -y
+	apt-get purge -y neutron-linuxbridge-agent neutron-openvswitch-agent
 	apt-get autoremove -y
+	apt-get install -y openvswitch-switch
 }
 
 function install-compute-packages() {
@@ -85,6 +87,9 @@ function install-compute-packages() {
 	echo "About to install Neutron for Compute"
 	sleep 2
 	apt-get install neutron-plugin-linuxbridge-agent conntrack -y
+    apt-get purge -y neutron-linuxbridge-agent neutron-openvswitch-agent
+	apt-get autoremove -y
+	apt-get install -y openvswitch-switch
 	
 	apt-get autoremove -y
 }

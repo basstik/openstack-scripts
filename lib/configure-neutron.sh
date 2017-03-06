@@ -10,9 +10,9 @@ if [ "$1" != "compute" -a "$1" != "networknode" -a "$1" != "controller" ]
 fi
 
 if [ "$1" == "controller" ] && [ $# -ne 7 ]
-        then
+		then
 		echo "Correct syntax: $0 controller <controller-host-name> <rabbitmq-password> <neutron-password> <neutron-db-password> <mysql-username> <mysql-password>"
-                exit 1;
+				exit 1;
 elif [ "$1" == "compute" ] || [ "$1" == "networknode" ] && [ $# -ne 4 ]
 	then
 		echo "Correct syntax: $0 [ compute | networknode ] <controller-host-name> <rabbitmq-password> <neutron-password>"
@@ -62,38 +62,18 @@ if [ "$1" == "networknode" -o "$1" == "controller" ]
 		crudini --set /etc/neutron/neutron.conf nova username nova
 		crudini --set /etc/neutron/neutron.conf nova password $4
 
-		echo_and_sleep "Configuring ML2 INI file"
-		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers flat,vlan,vxlan
-		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types vxlan
-		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers linuxbridge,l2population
-		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers port_security
-		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks provider
-		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges 1:1000
 		echo_and_sleep "Configured VNI Range."
 		
 		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group True
 		crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset True
-		
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings $neutron_linuxbridge_physical_interface_mappings
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan True
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population True
-		overlay_interface_ip=`ifconfig $neutron_linuxbridge_overlay_interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
-		echo "Overlay Interface IP Address: $overlay_interface_ip"
-		sleep 10
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $overlay_interface_ip
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini agent prevent_arp_spoofing True
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_security_group True
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
 sleep 3
 
 		echo_and_sleep "Configuring L3 Agent Information" 2
-		crudini --set /etc/neutron/l3_agent.ini DEFAULT interface_driver neutron.agent.linux.interface.BridgeInterfaceDriver
 		crudini --set /etc/neutron/l3_agent.ini DEFAULT verbose True
 		echo_and_sleep "Configured L3 Agent Information" 2
 		
 		echo_and_sleep "Configuring DHCP Agent Information" 1
-		crudini --set /etc/neutron/dhcp_agent.ini DEFAULT interface_driver neutron.agent.linux.interface.BridgeInterfaceDriver
 		crudini --set /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver neutron.agent.linux.dhcp.Dnsmasq
 		crudini --set /etc/neutron/dhcp_agent.ini DEFAULT verbose True
 		echo_and_sleep "Configured DHCP Agent Information" 2
@@ -107,20 +87,6 @@ sleep 3
 		crudini --set /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $2
 		crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret password
 		echo_and_sleep "Configured Metadata Agent Information" 2
-fi
-
-if [ "$1" == "compute" ]
-	then
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings $neutron_linuxbridge_physical_interface_mappings
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan True
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population True
-		overlay_interface_ip=`ifconfig $neutron_linuxbridge_overlay_interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
-		echo "Overlay Interface IP Address: $overlay_interface_ip"
-		sleep 10
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $overlay_interface_ip
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini agent prevent_arp_spoofing True
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_security_group True
-		crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 fi
 
 sleep 3
@@ -142,7 +108,57 @@ if [ "$1" == "compute" -o "$1" == "controller" ]
 		echo_and_sleep "Configured Nova to use Neutron - neutron section" 2
 
 fi
+##########################################################################xx
+service openvswitch-switch stop
+echo_and_sleep "About to delete OVS Config DB" 3
+rm -rf /var/log/openvswitch/*
+rm -rf /etc/openvswitch/conf.db
+echo_and_sleep "About to start OVS" 2
+service openvswitch-switch start
+ovs-vsctl show
+echo_and_sleep "Executed OVS VSCTL Show" 3
+
+odl_ip="10.0.0.100"
+
+if [ "$1" == "controller" ]
+	then
+		apt-get install -y python-networking-odl
+		echo_and_sleep "Configuring ML2 INI file" 5
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers flat,vxlan
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types vxlan
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers opendaylight
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers port_security
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks public
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges 1:1000
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver iptables_hybrid
+
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_odl username admin
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_odl password admin
+				crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_odl url http://$odl_ip:8080/controller/nb/v2/neutron
+
+		echo_and_sleep "Configuring L3 and DHCP Agent Information" 2
+				crudini --set /etc/neutron/l3_agent.ini DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+				crudini --set /etc/neutron/dhcp_agent.ini DEFAULT interface_driver neutron.agent.linux.interface.OVSInterfaceDriver
+				crudini --set /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata True
+				crudini --set /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip controller
+				crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret password
+fi
+
+overlay_interface_ip=`ifconfig $data_interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
+echo "Overlay Interface IP Address: $overlay_interface_ip"
+sleep 5
+uuid_ovs=`ovs-vsctl get Open_vSwitch . _uuid`
+echo "UUID of OVS: $uuid_ovs"
+sleep 5
+ovs-vsctl set Open_vSwitch $uuid_ovs other_config={local_ip=$overlay_interface_ip}
+sleep 3
+ovs-vsctl set-manager tcp:$odl_ip:6640
+echo_and_sleep "Set the manager for OVS" 7
+ovs-vsctl show
+echo_and_sleep "Executed OVS VSCTL Show" 5
 		
+##########################################################################xx
+
 if [ "$1" == "controller" ]
 	then
 		echo_and_sleep "Configured Security Group for ML2. About to Upgrade Neutron DB..."
@@ -150,7 +166,7 @@ if [ "$1" == "controller" ]
 		echo_and_sleep "Restarting Services..."
 		service nova-api restart
 		service neutron-server restart
-		service neutron-linuxbridge-agent restart
+		service openvswitch-switch restart
 		service neutron-l3-agent restart
 		service neutron-dhcp-agent restart
 		service neutron-metadata-agent restart
@@ -168,7 +184,7 @@ elif [ "$1" == "compute" ]
 		service nova-compute restart
 elif [ "$1" == "networknode" ]
 	then
-		service neutron-linuxbridge-agent restart
+		service openvswitch-switch restart
 		service neutron-l3-agent restart
 		service neutron-dhcp-agent restart
 		service neutron-metadata-agent restart
