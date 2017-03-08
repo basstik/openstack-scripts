@@ -47,7 +47,7 @@ configure-keystone-authentication /etc/neutron/neutron.conf $2 neutron $4
 
 crudini --set /etc/neutron/neutron.conf DEFAULT verbose True
 
-if [ "$1" == "networknode" -o "$1" == "controller" ]
+if [ "$1" == "networknode" ]
 	then
 		crudini --set /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_status_changes True
 		crudini --set /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_data_changes True
@@ -108,19 +108,25 @@ if [ "$1" == "compute" -o "$1" == "controller" ]
 		echo_and_sleep "Configured Nova to use Neutron - neutron section" 2
 
 fi
-##########################################################################xx
-service openvswitch-switch stop
-echo_and_sleep "About to delete OVS Config DB" 3
-rm -rf /var/log/openvswitch/*
-rm -rf /etc/openvswitch/conf.db
-echo_and_sleep "About to start OVS" 2
-service openvswitch-switch start
-ovs-vsctl show
-echo_and_sleep "Executed OVS VSCTL Show" 3
 
 odl_ip="10.0.0.100"
 
-if [ "$1" == "controller" ]
+if [ "$1" == "compute" -o "$1" == "networknode" ]
+	then
+		service neutron-server stop
+		service openvswitch-switch stop
+		echo_and_sleep "About to delete OVS Config DB" 3
+		rm -rf /var/log/openvswitch/*
+		rm -rf /etc/openvswitch/conf.db
+		echo_and_sleep "About to start OVS" 2
+		service openvswitch-switch start
+		ovs-vsctl show
+		echo_and_sleep "Executed OVS VSCTL Show" 3
+		service neutron-server start
+fi
+
+
+if [ "$1" == "networknode" ]
 	then
 		apt-get install -y python-networking-odl
 		echo_and_sleep "Configuring ML2 INI file" 5
@@ -144,22 +150,23 @@ if [ "$1" == "controller" ]
 				crudini --set /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret password
 fi
 
-overlay_interface_ip=`ifconfig $data_interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
-echo "Overlay Interface IP Address: $overlay_interface_ip"
-sleep 5
-uuid_ovs=`ovs-vsctl get Open_vSwitch . _uuid`
-echo "UUID of OVS: $uuid_ovs"
-sleep 5
-ovs-vsctl set Open_vSwitch $uuid_ovs other_config={local_ip=$overlay_interface_ip}
-sleep 3
-ovs-vsctl set-manager tcp:$odl_ip:6640
-echo_and_sleep "Set the manager for OVS" 7
-ovs-vsctl show
-echo_and_sleep "Executed OVS VSCTL Show" 5
-		
-##########################################################################xx
+if [ "$1" == "compute" -o "$1" == "networknode" ]
+	then
+		overlay_interface_ip=`ifconfig $data_interface | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
+		echo "Overlay Interface IP Address: $overlay_interface_ip"
+		sleep 5
+		uuid_ovs=`ovs-vsctl get Open_vSwitch . _uuid`
+		echo "UUID of OVS: $uuid_ovs"
+		sleep 5
+		ovs-vsctl set Open_vSwitch $uuid_ovs other_config={local_ip=$overlay_interface_ip}
+		sleep 3
+		ovs-vsctl set-manager tcp:$odl_ip:6640
+		echo_and_sleep "Set the manager for OVS" 7
+		ovs-vsctl show
+		echo_and_sleep "Executed OVS VSCTL Show" 5
+fi
 
-if [ "$1" == "controller" ]
+if [ "$1" == "networknode" ]
 	then
 		echo_and_sleep "Configured Security Group for ML2. About to Upgrade Neutron DB..."
 		neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head
@@ -179,13 +186,13 @@ if [ "$1" == "controller" ]
 		neutron agent-list
 		echo_and_sleep "Printed Neutron Agent List" 2
 		rm -f /var/lib/neutron/neutron.sqlite
-elif [ "$1" == "compute" ]
-	then
-		service nova-compute restart
-elif [ "$1" == "networknode" ]
-	then
 		service openvswitch-switch restart
 		service neutron-l3-agent restart
 		service neutron-dhcp-agent restart
 		service neutron-metadata-agent restart
+fi
+
+if [ "$1" == "compute" ]
+	then
+		service nova-compute restart
 fi
