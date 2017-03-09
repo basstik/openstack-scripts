@@ -25,7 +25,6 @@ function remove-compute-packages() {
 	sleep 2
 	apt-get purge nova-compute sysfsutils -y
 	apt-get purge neutron-plugin-linuxbridge-agent conntrack -y
-	apt-get purge ceilometer-agent-compute -y
 	apt-get autoremove -y
 }
 
@@ -44,9 +43,6 @@ function remove-controller-packages() {
 	apt-get purge openstack-dashboard apache2 libapache2-mod-wsgi \
 	memcached python-memcache -y
 	apt-get purge mongodb-server mongodb-clients python-pymongo -y
-	apt-get purge ceilometer-api ceilometer-collector ceilometer-agent-central \
-	ceilometer-agent-notification ceilometer-alarm-evaluator \
-	ceilometer-alarm-notifier python-ceilometerclient -y
 	apt-get autoremove -y
 }
 

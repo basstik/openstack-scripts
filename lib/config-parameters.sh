@@ -1,8 +1,8 @@
 controller_host_name="controller"
 
 ### Start - interface related settings
-readonly mgmt_interface="enp0s3"
-readonly data_interface="enp0s8"
+readonly mgmt_interface="eth0"
+readonly data_interface="eth0"
 ### End - interface related settings
 
 ### Start - Neutron related settings
@@ -32,12 +32,6 @@ readonly nova_db_password="password"
 
 readonly neutron_password="password"
 readonly neutron_db_password="password"
-
-readonly ceilometer_password="password"
-readonly ceilometer_db_password="password"
-
-readonly heat_password="password"
-readonly heat_db_password="password"
 
 function echo_and_sleep() {
 	if [ -z "$2" ]

@@ -304,9 +304,9 @@ OPENSTACK_NEUTRON_NETWORK = {
 
 # The OPENSTACK_HEAT_STACK settings can be used to disable password
 # field required while launching the stack.
-OPENSTACK_HEAT_STACK = {
-    'enable_user_pass': True,
-}
+#OPENSTACK_HEAT_STACK = {
+#    'enable_user_pass': True,
+#}
 
 # The OPENSTACK_IMAGE_BACKEND settings can be used to customize features
 # in the OpenStack Dashboard related to the Image service, such as the list

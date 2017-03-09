@@ -74,8 +74,6 @@ function manage-controller-services() {
 		manage-controller-nova $2
 		sleep 2
 		manage-controller-neutron $2
-		sleep 2
-		service ceilometer-api $2
 	fi
 }
 
@@ -86,8 +84,6 @@ function manage-compute-services() {
 	service openvswitch-switch $1
 	sleep 2
 	service neutron-plugin-openvswitch-agent $1 
-	sleep 2
-	service ceilometer-agent-compute $1
 }
 
 

@@ -1,5 +1,5 @@
 dir_path=$(dirname $0)
-node_type=`bash $dir_path/util/detect-nodetype.sh`
+node_type="controller"
 echo "Node Type detected as: $node_type"
 echo "Sourcing config-parameters..."
 source $dir_path/lib/config-parameters.sh
